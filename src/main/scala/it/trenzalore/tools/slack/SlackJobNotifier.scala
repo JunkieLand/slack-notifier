@@ -6,10 +6,12 @@ import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{ DateTime, Duration }
 
 class SlackJobNotifier(
-  jobName:      String,
-  webHookUrl:   String,
-  shouldNotify: Boolean        = true,
-  environment:  Option[String] = None
+  jobName:        String,
+  webHookUrl:     String,
+  shouldNotify:   Boolean        = true,
+  environment:    Option[String] = None,
+  headCommitSha:  Option[String] = None,
+  projectVersion: Option[String] = None
 ) extends SlackNotifier(webHookUrl, shouldNotify) {
   import SlackJobNotifier._
 
@@ -28,7 +30,7 @@ class SlackJobNotifier(
         title = Some("Job started"),
         title_link = trackingUrl,
         text = txt,
-        fields = environment.map(env ⇒ Field(title = Some("Environment"), value = Some(env), short = true)).toVector,
+        fields = commonFields,
         ts = Some(startDateTime.getMillis / 1000),
         fallback = Some(fallback(jobName, startDateTime, txt))
       ))
@@ -47,10 +49,7 @@ class SlackJobNotifier(
         title_link = trackingUrl,
         text = text,
         color = Some("#2EC886"),
-        fields = {
-          val envField = environment.map(env ⇒ Field(title = Some("Environment"), value = Some(env), short = true)).toVector
-          envField ++ Vector(durationField(startDateTime, endDateTime))
-        },
+        fields = commonFields :+ durationField(startDateTime, endDateTime),
         ts = Some(endDateTime.getMillis / 1000),
         fallback = Some(fallback(jobName, startDateTime, text))
       ))
@@ -74,10 +73,7 @@ class SlackJobNotifier(
         title_link = trackingUrl,
         text = Some(text),
         color = Some("#FF0000"),
-        fields = {
-          val envField = environment.map(environmentField).toVector
-          envField ++ Vector(durationField(startDateTime, endDateTime))
-        },
+        fields = commonFields :+ durationField(startDateTime, endDateTime),
         ts = Some(endDateTime.getMillis / 1000),
         fallback = Some(fallback(jobName, startDateTime, Some(text)))
       ))
@@ -85,6 +81,12 @@ class SlackJobNotifier(
 
     notify(msg)
   }
+
+  private lazy val commonFields = Vector(
+    environment.map(environmentField),
+    projectVersion.map(versionField),
+    headCommitSha.map(commitField)
+  ).flatten
 
   private def fallback(jobName: String, dateTime: DateTime, text: Option[String]): String = {
     val envStr = environment.map(env ⇒ s"in environment $env").getOrElse("")
@@ -120,6 +122,18 @@ object SlackJobNotifier {
   def environmentField(name: String) = Field(
     title = Some("Environment"),
     value = Some(name),
+    short = true
+  )
+
+  def commitField(commitSha: String) = Field(
+    title = Some("Commit"),
+    value = Some(commitSha),
+    short = true
+  )
+
+  def versionField(version: String) = Field(
+    title = Some("Version"),
+    value = Some(version),
     short = true
   )
 
