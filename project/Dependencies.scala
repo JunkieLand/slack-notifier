@@ -24,6 +24,7 @@ object Dependencies {
 
   val okHttp = "com.squareup.okhttp3" % "okhttp" % "3.13.1"
   val playJson = "com.typesafe.play" %% "play-json" % "2.6.10"
+  val yarnClient = "org.apache.hadoop" % "hadoop-yarn-client" % "3.1.2"
 
   val commonLibraries = Seq(
     "org.scalatest" %% "scalatest" % "3.0.5" % "test",

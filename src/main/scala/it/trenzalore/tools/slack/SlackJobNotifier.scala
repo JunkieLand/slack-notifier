@@ -15,6 +15,8 @@ class SlackJobNotifier(
 
   private var startDateTime: DateTime = null
 
+  def trackingUrl: Option[String] = None
+
   def notifyJobStart(text: String = "") = {
     startDateTime = DateTime.now()
 
@@ -24,6 +26,7 @@ class SlackJobNotifier(
       attachments = Vector(Attachment(
         author_name = Some(jobName),
         title = Some("Job started"),
+        title_link = trackingUrl,
         text = txt,
         fields = environment.map(env ⇒ Field(title = Some("Environment"), value = Some(env), short = true)).toVector,
         ts = Some(startDateTime.getMillis / 1000),
@@ -41,6 +44,7 @@ class SlackJobNotifier(
       attachments = Vector(Attachment(
         author_name = Some(jobName),
         title = Some("Job successful"),
+        title_link = trackingUrl,
         text = text,
         color = Some("#2EC886"),
         fields = {
@@ -67,10 +71,11 @@ class SlackJobNotifier(
       attachments = Vector(Attachment(
         author_name = Some(jobName),
         title = Some("Job failed"),
+        title_link = trackingUrl,
         text = Some(text),
         color = Some("#FF0000"),
         fields = {
-          val envField = environment.map(env ⇒ Field(title = Some("Environment"), value = Some(env), short = true)).toVector
+          val envField = environment.map(environmentField).toVector
           envField ++ Vector(durationField(startDateTime, endDateTime))
         },
         ts = Some(endDateTime.getMillis / 1000),
@@ -109,6 +114,12 @@ object SlackJobNotifier {
   def durationField(start: DateTime, end: DateTime) = Field(
     title = Some("Duration"),
     value = Some(getDurationString(start, end)),
+    short = true
+  )
+
+  def environmentField(name: String) = Field(
+    title = Some("Environment"),
+    value = Some(name),
     short = true
   )
 

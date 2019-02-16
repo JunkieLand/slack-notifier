@@ -27,10 +27,14 @@ lazy val slackNotifier = Project("slack-notifier", new File("."))
     libraryDependencies ++= Dependencies.commonLibraries
   )
   .settings(
+    libraryDependencies ++= Dependencies.sparkDependencies(isProvided = true)
+  )
+  .settings(
     libraryDependencies ++= Vector(
       Dependencies.okHttp,
       Dependencies.scalaLogging,
-      Dependencies.playJson
+      Dependencies.playJson,
+      Dependencies.yarnClient
     )
   )
 
